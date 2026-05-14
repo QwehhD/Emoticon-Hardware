@@ -40,6 +40,13 @@ const char *emotionMap[] = {
     "sedih",
     "marah"};
 
+// Daftar UID kartu yang terdaftar (ganti dengan UID kartu Anda)
+const char *registeredUIDs[] = {
+    "1A2B3C4D",
+    "5E6F7G8H",
+    "9I0J1K2L"};
+const int registeredUIDCount = 3;
+
 void setup_wifi();
 void reconnect();
 void sendToNextion(uint8_t page);
@@ -47,6 +54,7 @@ void handleNextionInput();
 void sendEmotionData(String uid, String emotion);
 void handleRFID();
 void printHex(byte *buffer, byte bufferSize);
+bool isValidUID(String uid);
 
 void setup()
 {
@@ -198,14 +206,35 @@ void handleRFID()
     Serial.print("[RFID] Card detected! UID: ");
     Serial.println(cardUID);
 
-    currentCardUID = cardUID;
-    currentState = STATE_WAITING_EMOTION;
-
-    sendToNextion(1);
+    // Validasi UID kartu
+    if (isValidUID(cardUID))
+    {
+        Serial.println("[RFID] ✓ Kartu terdaftar! Akses diizinkan.");
+        
+        currentCardUID = cardUID;
+        currentState = STATE_WAITING_EMOTION;
+        
+        sendToNextion(1);
+    }
+    else
+    {
+        Serial.println("[RFID] ✗ ERROR: Kartu tidak terdaftar! Akses ditolak.");
+    }
 
     rfid.PICC_HaltA();
-
     rfid.PCD_StopCrypto1();
+}
+
+bool isValidUID(String uid)
+{
+    for (int i = 0; i < registeredUIDCount; i++)
+    {
+        if (uid == registeredUIDs[i])
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 void sendToNextion(uint8_t page)
